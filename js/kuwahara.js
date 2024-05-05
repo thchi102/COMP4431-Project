@@ -98,6 +98,124 @@
                 variance: variance
             };
         }
+
+        function AdaptiveRegionStat(x, y, max, region){
+            var meanR = 0, meanG = 0, meanB = 0, variance = 0;
+            for(var l = 3; l <= max; l++){
+                var local_meanR = 0, local_meanG = 0, local_meanB = 0, local_var = 0;
+                var local_meanValue = 0;
+                switch(region){
+                    case "top-left":
+                        for(var j = 0; j > -l; j--){
+                            for(var i = 0; i > -l; i--){
+                                var pixel = imageproc.getPixel(inputData, x + i, y + j);
+                                local_meanR += pixel.r;
+                                local_meanG += pixel.g;
+                                local_meanB += pixel.b;
+                                local_meanValue += (pixel.r + pixel.g + pixel.b) / 3;
+                            }
+                        }
+                        local_meanR /= l**2;
+                        local_meanG /= l**2;
+                        local_meanB /= l**2;
+                        local_meanValue /= l**2;
+                        for(var j = 0; j > -l; j--){
+                            for(var i = 0; i > -l; i--){
+                                var pixel = imageproc.getPixel(inputData, x + i, y + j);
+                                var value = (pixel.r + pixel.g + pixel.b) / 3;
+
+                                local_var += Math.pow(value - local_meanValue, 2);
+                            }
+                        }
+                        local_var /= l**2;
+                        break;
+                    case "top-right":
+                        for(var j = 0; j > -l; j--){
+                            for(var i = 0; i < l; i++){
+                                var pixel = imageproc.getPixel(inputData, x + i, y + j);
+                                local_meanR += pixel.r;
+                                local_meanG += pixel.g;
+                                local_meanB += pixel.b;
+                                local_meanValue += (pixel.r + pixel.g + pixel.b) / 3;
+                            }
+                        }
+                        local_meanR /= l**2;
+                        local_meanG /= l**2;
+                        local_meanB /= l**2;
+                        local_meanValue /= l**2;
+                        for(var j = 0; j > -l; j--){
+                            for(var i = 0; i < l; i++){
+                                var pixel = imageproc.getPixel(inputData, x + i, y + j);
+                                var value = (pixel.r + pixel.g + pixel.b) / 3;
+
+                                local_var += Math.pow(value - local_meanValue, 2);
+                            }
+                        }
+                        local_var /= l**2;
+                        break;
+                    case "bottom-left":
+                        for(var j = 0; j < l; j++){
+                            for(var i = 0; i > -l; i--){
+                                var pixel = imageproc.getPixel(inputData, x + i, y + j);
+                                local_meanR += pixel.r;
+                                local_meanG += pixel.g;
+                                local_meanB += pixel.b;
+                                local_meanValue += (pixel.r + pixel.g + pixel.b) / 3;
+                            }
+                        }
+                        local_meanR /= l**2;
+                        local_meanG /= l**2;
+                        local_meanB /= l**2;
+                        local_meanValue /= l**2;
+                        for(var j = 0; j < l; j++){
+                            for(var i = 0; i > -l; i--){
+                                var pixel = imageproc.getPixel(inputData, x + i, y + j);
+                                var value = (pixel.r + pixel.g + pixel.b) / 3;
+
+                                local_var += Math.pow(value - local_meanValue, 2);
+                            }
+                        }
+                        local_var /= l**2;
+                        break;
+                    case "bottom-right":
+                        for(var j = 0; j < l; j++){
+                            for(var i = 0; i < l; i++){
+                                var pixel = imageproc.getPixel(inputData, x + i, y + j);
+                                local_meanR += pixel.r;
+                                local_meanG += pixel.g;
+                                local_meanB += pixel.b;
+                                local_meanValue += (pixel.r + pixel.g + pixel.b) / 3;
+                            }
+                        }
+                        local_meanR /= l**2;
+                        local_meanG /= l**2;
+                        local_meanB /= l**2;
+                        local_meanValue /= l**2;
+                        for(var j = 0; j < l; j++){
+                            for(var i = 0; i < l; i++){
+                                var pixel = imageproc.getPixel(inputData, x + i, y + j);
+                                var value = (pixel.r + pixel.g + pixel.b) / 3;
+
+                                local_var += Math.pow(value - local_meanValue, 2);
+                            }
+                        }
+                        local_var /= l**2;
+                        break;
+                }
+
+                if(variance == 0 || variance > local_var){
+                    variance = local_var;
+                    meanR = local_meanR; meanG = local_meanG; meanB = local_meanB;
+                }
+            }
+
+            return {
+                mean: {r: meanR, g: meanG, b: meanB},
+                variance: variance
+            };
+        }
+
+
         switch(type){
 
         case "original":
@@ -303,7 +421,44 @@
             console.log("Applying Adaptive Kuwahara filter...");
                         
             //TODO: implement Adaptive filter
+            for (var y = 0; y < inputData.height; y++) {
+                for (var x = 0; x < inputData.width; x++) {
+                    var regionA = AdaptiveRegionStat(x, y, size, "top-left", inputData);
+                    var regionB = AdaptiveRegionStat(x, y, size, "top-right", inputData);
+                    var regionC = AdaptiveRegionStat(x, y, size, "bottom-left", inputData);
+                    var regionD = AdaptiveRegionStat(x, y, size, "bottom-right", inputData);
 
+                    // Get the minimum variance value
+                    var minV = Math.min(regionA.variance, regionB.variance,
+                        regionC.variance, regionD.variance);
+
+                    var i = (x + y * inputData.width) * 4;
+
+                    // Put the mean colour of the region with the minimum
+                    // variance in the pixel
+                    switch (minV) {
+                    case regionA.variance:
+                        outputData.data[i]     = regionA.mean.r;
+                        outputData.data[i + 1] = regionA.mean.g;
+                        outputData.data[i + 2] = regionA.mean.b;
+                        break;
+                    case regionB.variance:
+                        outputData.data[i]     = regionB.mean.r;
+                        outputData.data[i + 1] = regionB.mean.g;
+                        outputData.data[i + 2] = regionB.mean.b;
+                        break;
+                    case regionC.variance:
+                        outputData.data[i]     = regionC.mean.r;
+                        outputData.data[i + 1] = regionC.mean.g;
+                        outputData.data[i + 2] = regionC.mean.b;
+                        break;
+                    case regionD.variance:
+                        outputData.data[i]     = regionD.mean.r;
+                        outputData.data[i + 1] = regionD.mean.g;
+                        outputData.data[i + 2] = regionD.mean.b;
+                    }
+                }
+            }            
             break;
     }
     }

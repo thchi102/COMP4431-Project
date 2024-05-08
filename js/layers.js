@@ -54,6 +54,11 @@
                 var percentage = parseInt($("#auto-contrast-percentage").val()) / 100.0;
                 imageproc.autoContrast(inputImage, outputImage, type, percentage);
                 break;
+            
+            case "add-noise":
+            var percentage = parseInt($("#noise-percentage").val()) / 100.0;
+            imageproc.addPepperSalt(inputImage, outputImage, percentage);
+            break;
         }
     }
 

@@ -317,4 +317,30 @@
         }
     }
 
+    imageproc.addPepperSalt = function(inputData, outputData, percentage){
+        console.log("Adding pepper and salt noise...");
+        for (var i = 0; i < inputData.data.length; i += 4) {
+            // Adjust each pixel based on the minimum and maximum values
+            var n = Math.random();
+            if(n < percentage/2){
+                outputData.data[i] = 0;
+                outputData.data[i+1] = 0;
+                outputData.data[i+2] = 0;
+                outputData.data[i+3] = 255;
+            }
+            else if(n > (1-percentage/2)){
+                outputData.data[i] = 255;
+                outputData.data[i+1] = 255;
+                outputData.data[i+2] = 255;
+                outputData.data[i+3] = 255;
+            }
+            else{
+                outputData.data[i] = inputData.data[i];
+                outputData.data[i+1] = inputData.data[i+1];
+                outputData.data[i+2] = inputData.data[i+2];
+                outputData.data[i+3] = inputData.data[i+3];
+            }
+        }
+    }
+
 }(window.imageproc = window.imageproc || {}));

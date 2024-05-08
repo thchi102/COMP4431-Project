@@ -263,10 +263,8 @@
             break;
 
         case "Gaussian-circular":
-            console.log("Applying Gaussian-circular Kuwahara filter...");
-
             //TODO: implement Gaussian circular filter
-
+            
             break;
         case "Tomita-Tsuji":
             console.log("Applying Tomita-Tsuji Kuwahara filter...");

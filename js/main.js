@@ -88,6 +88,18 @@ function changeTabs(e) {
     e.preventDefault();
 }
 
+function handleDropdownChange(){
+    var dropdown = document.getElementById("kuwahara-type");
+    var selectedType = dropdown.value;
+    var slide = document.getElementById("filter-block");
+    if(selectedType == "Nagao-Matsuyama"){
+        slide.style.display = "none";
+    }
+    else{
+        slide.style.display = "block";
+    }
+}
+
 // Set up every things when the document is fully loaded
 $(document).ready(function() {
     // Initialize the imageproc module.
@@ -106,4 +118,6 @@ $(document).ready(function() {
     // Set up the event handlers
     $('a.nav-link').on("click", showTab); // Tab clicked
     $('a.dropdown-item').on("click", changeTabs); // Tab item clicked
+
+    $("#kuwahara-type").on("change", function() { handleDropdownChange(); });
 });

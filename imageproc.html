@@ -30,11 +30,18 @@
         <div class="row">
             <div class="col-6">
                 <h5>Input Image</h5>
-                <canvas id="input" width="480" height="360"></canvas>
+                <canvas id="input" width="320" height="204"></canvas>
                 <div class="form-inline">
                     <div class="input-group">
                         <div class="input-group-prepend"><span class="input-group-text">Image</span></div>
                         <select class="custom-select" id="input-image">
+                            <option value="testQ.png">testQ</option>
+                            <option value="fig2.png">fig2</option>
+                            <option value="fig2Small.png">fig2Small</option>
+                            <option value="bridge.png">bridge</option>
+                            <option value="castle.png">castle</option>
+                            <option value="testing330.png">testing330</option>
+                            <option value="testing30.png">testing30</option>
                             <option value="hkust.png">HKUST</option>
                             <option value="justice_league.png">Justice League</option>
                             <option value="wonder_woman.png">Wonder Woman</option>
@@ -51,7 +58,7 @@
             </div>
             <div class="col-6">
                 <h5>Output Image</h5>
-                <canvas id="output" width="480" height="360"></canvas>
+                <canvas id="output" width="320" height="204"></canvas>
                 <div class="form-inline">
                     <button id="output-update" class="btn btn-info"><i class="fas fa-sync"></i> Update Output</button>
                 </div>
@@ -349,6 +356,38 @@
                                         </div>
                                         <div class="input-group-append">
                                             <span class="input-group-text d-block" style="width: 5.5em"><span>5</span> &times; <span>5</span></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4" style="display: none;">
+                                    <label for="gaussian-sigma">Sigma(&sigma;):</label>
+                                    <div class="input-group">
+                                        <div class="row flex-fill align-items-center mx-0 px-2 border rounded-left">
+                                            <input class="custom-range" id="gaussian-sigma" type="range" value="3" min="0.4" max="10" step="0.1"
+                                             oninput="$(this).parents('.input-group').find('.input-group-text > span').html($(this).val())">
+                                        </div>
+                                        <div class="input-group-append">
+                                            <span class="input-group-text d-block" style="width: 5.5em"><span>3</span></span>
+                                        </div>
+                                    </div>
+                                    <label for="gaussian-n">Number of Sectors(N):</label>
+                                    <div class="input-group">
+                                        <div class="row flex-fill align-items-center mx-0 px-2 border rounded-left">
+                                            <input class="custom-range" id="gaussian-n" type="range" value="8" min="1" max="25" step="1"
+                                             oninput="$(this).parents('.input-group').find('.input-group-text > span').html($(this).val())">
+                                        </div>
+                                        <div class="input-group-append">
+                                            <span class="input-group-text d-block" style="width: 5.5em"><span>8</span></span>
+                                        </div>
+                                    </div>
+                                    <label for="gaussian-q">Smoothing Factor(q):</label>
+                                    <div class="input-group">
+                                        <div class="row flex-fill align-items-center mx-0 px-2 border rounded-left">
+                                            <input class="custom-range" id="gaussian-q" type="range" value="3" min="0" max="71" step="1"
+                                             oninput="$(this).parents('.input-group').find('.input-group-text > span').html($(this).val())">
+                                        </div>
+                                        <div class="input-group-append">
+                                            <span class="input-group-text d-block" style="width: 5.5em"><span>3</span></span>
                                         </div>
                                     </div>
                                 </div>

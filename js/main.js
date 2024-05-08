@@ -119,5 +119,30 @@ $(document).ready(function() {
     $('a.nav-link').on("click", showTab); // Tab clicked
     $('a.dropdown-item').on("click", changeTabs); // Tab item clicked
 
+
+
+    // Change slider set for kuwahara filters
+    $('#kuwahara-type').change(function() {
+        var selectedType = $(this).val();
+        if (selectedType === 'Gaussian-circular') {
+            $('#kuwahara-filter-size').closest('.col-4').hide(); // Hide the original slider
+            $('#gaussian-sigma').closest('.col-4').show(); // Show the new sliders
+        } else {
+            $('#kuwahara-filter-size').closest('.col-4').show(); // Show the original slider
+            $('#gaussian-sigma').closest('.col-4').hide(); // Hide the new sliders
+        }
+    });
+
+    //make max of gaussian-circular filter smoothing factor display as infinity
+    $('#gaussian-q').on("input", function() {
+    var value = parseInt($(this).val());
+    if (value === 71) {
+        $('#gaussian-q').parents('.input-group').find('.input-group-text > span').html("&infin;");
+    } else {
+        $('#gaussian-q').parents('.input-group').find('.input-group-text > span').text(value);
+    }
+    });
+
     $("#kuwahara-type").on("change", function() { handleDropdownChange(); });
+
 });

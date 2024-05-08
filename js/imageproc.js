@@ -117,13 +117,13 @@
     imageproc.getPixel = function(imageData, x, y, border) {
         // Handle the boundary cases
         if (x < 0)
-            x = (border=="wrap")? imageData.width + (x % imageData.width) : 0;
+            x = (border=="wrap")? imageData.width + (x % imageData.width) : (-x % imageData.width);
         if (x >= imageData.width)
-            x = (border=="wrap")? x % imageData.width : imageData.width - 1;
+            x = (border=="wrap")? x % imageData.width : imageData.width - (x % imageData.width);
         if (y < 0)
-            y = (border=="wrap")? imageData.height + (y % imageData.height) : 0;
+            y = (border=="wrap")? imageData.height + (y % imageData.height) : (-y % imageData.width);
         if (y >= imageData.height)
-            y = (border=="wrap")? y % imageData.height : imageData.height - 1;
+            y = (border=="wrap")? y % imageData.height : imageData.height - (y % imageData.width);
 
         var i = (x + y * imageData.width) * 4;
         return {

@@ -58,6 +58,22 @@
             return variance;
         }
 
+        function calc2DGaussKernal(i, j, sigma){
+            return (1 / (2 * Math.PI * sigma**2)) * Math.E ** (-1 * (i**2 + j**2)/(2 * sigma**2));
+        }
+
+        function calcWeight(i, j, sigma, region, N){
+            var theta = Math.atan(j/i);
+            var U = 0;
+            if( (region - 0.5) < (N/(2*Math.PI) * theta) && ((N/(2*Math.PI) * theta) < region + 0.5)){
+                U = N;
+            }
+            // console.log(U * calc2DGaussKernal(i, j, sigma/4));
+            var weight = calc2DGaussKernal(i, j, sigma) * U * calc2DGaussKernal(i, j, sigma/4);
+
+            return weight;
+        }
+
         function regionStat(x, y) {
             // Find the mean colour and brightness
             var meanR = 0, meanG = 0, meanB = 0;
@@ -78,7 +94,7 @@
             meanR /= Math.ceil(size/2)**2;
             meanG /= Math.ceil(size/2)**2;
             meanB /= Math.ceil(size/2)**2;
-            meanValue /= Math.ceil(size/2)**2;
+            meanValue /= Math.ceil(size/2)**2; 
 
             // Find the variance
             var variance = 0;
@@ -215,6 +231,56 @@
             };
         }
 
+        function CircularRegionStat(x, y, sigma, region, N){
+
+            var meanR = 0, meanG = 0, meanB = 0, variance = 0, totalWeight = 0;
+
+            for (var j = -(parseInt(sigma*3)+1); j <= parseInt(sigma*3)+1; j++) {
+                for (var i = -(parseInt(sigma*3)+1); i <= parseInt(sigma*3)+1; i++) {
+                    var pixel = imageproc.getPixel(inputData, x + i, y + j);
+                    var weight = calcWeight(i, j, sigma, region, N);
+                    // console.log(weight);
+                    meanR += pixel.r * weight;
+                    meanG += pixel.g * weight;
+                    meanB += pixel.b * weight;
+                    totalWeight += weight;
+                }
+            }
+
+            for (var j = -(parseInt(sigma*3)+1); j <= parseInt(sigma*3)+1; j++) {
+                for (var i = -(parseInt(sigma*3)+1); i <= parseInt(sigma*3)+1; i++) {
+                    var pixel = imageproc.getPixel(inputData, x + i, y + j);
+                    var weight = calcWeight(i, j, sigma, region, N);
+                    variance += (pixel.r- meanR)**2 * weight;
+                    variance += (pixel.r- meanR)**2 * weight;
+                    variance += (pixel.r- meanR)**2 * weight;
+
+                }
+            }
+
+            if(totalWeight != 0){
+                meanR /= totalWeight;
+                meanG /= totalWeight;
+                meanB /= totalWeight;
+                variance /= totalWeight;
+            }
+            else{
+                meanR = 0; meanG = 0; meanB = 0;
+                variance = 0;
+            }
+
+            // console.log({
+            //     mean: {r: meanR/totalWeight, g: meanG/totalWeight, b: meanB/totalWeight},
+            //     variance: variance/totalWeight
+            // });
+
+            return {
+                mean: {r: meanR, g: meanG, b: meanB},
+                variance: variance
+            };
+
+        }
+
 
         switch(type){
 
@@ -267,6 +333,52 @@
 
             //TODO: implement Gaussian circular filter
 
+            var sigma = 1.5; //need input (TODO: determine typical range and build html scroller)
+            var N = 8; //need input (TODO: determine typical range and build html scroller)
+            var q = 2;
+
+            for(var y = 0; y < inputData.height; y++){
+                for (var x = 0; x < inputData.width; x++){
+                    var arr = [];
+
+                    for(var i = 1; i <= N; i++){
+                        var stats = CircularRegionStat(x, y, sigma, i, N);
+                        arr.push(stats.mean);
+                        console.log(stats.variance);
+                        arr[i-1].sd = Math.sqrt(stats.variance);
+                    }
+
+                    // console.log(arr);
+
+                    var resultNumer = {
+                        r: arr.reduce((acc, cur) => acc + (cur.r * cur.sd ** (-q)), 0),
+                        g: arr.reduce((acc, cur) => acc + (cur.g * cur.sd ** (-q)), 0),
+                        b: arr.reduce((acc, cur) => acc + (cur.b * cur.sd ** (-q)), 0)
+                    };
+
+                    var resultDenom = {
+                        r: arr.reduce((acc, cur) => acc + (cur.sd ** (-q)), 0),
+                        g: arr.reduce((acc, cur) => acc + (cur.sd ** (-q)), 0),
+                        b: arr.reduce((acc, cur) => acc + (cur.sd ** (-q)), 0)
+                    };
+
+                    // console.log(arr[4].sd, arr[5].sd);
+
+                    console.log("Num: ",resultNumer);
+                    console.log("Den: ",resultDenom);
+
+                    var i = (x + y * inputData.width) * 4;
+
+                    // console.log(resultNumer.b / resultDenom.b);
+
+                    outputData.data[i]     = parseInt(resultNumer.r / resultDenom.r);
+                    outputData.data[i + 1] = parseInt(resultNumer.g / resultDenom.g);
+                    outputData.data[i + 2] = parseInt(resultNumer.b / resultDenom.b);
+
+                }
+            }
+
+            console.log("completed")
             break;
         case "Tomita-Tsuji":
             console.log("Applying Tomita-Tsuji Kuwahara filter...");
@@ -458,7 +570,8 @@
                         outputData.data[i + 2] = regionD.mean.b;
                     }
                 }
-            }            
+            }
+            console.log("completed")            
             break;
     }
     }

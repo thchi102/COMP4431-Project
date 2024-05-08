@@ -332,10 +332,7 @@
             break;
 
         case "Gaussian-circular":
-            console.log("Applying Gaussian-circular Kuwahara filter...");
-
             //TODO: implement Gaussian circular filter
-
             var sigma = parseInt($("#gaussian-sigma").val());
             var N = parseInt($("#gaussian-n").val());
             var q = parseInt($("#gaussian-q").val());

@@ -52,16 +52,6 @@
                             <option value="oldhongkong1.png">Old Hong Kong 1</option> <!-- from gwulo.com -->
                             <option value="oldhongkong2.png">Old Hong Kong 2</option> <!-- from oldhkphoto.com -->
                             <option value="grayscale.png">Grayscale Test</option>
-                            <option value="S&P_hkust.png">S&P_HKUST</option>
-                            <option value="S&P_justice_league.png">S&P_Justice League</option>
-                            <option value="S&P_wonder_woman.png">S&P_Wonder Woman</option>
-                            <option value="S&P_cap.png">S&P_Captain America</option>
-                            <option value="S&P_agatha.png">S&P_Agatha Harkness</option>
-                            <option value="S&P_mandalorian.png">S&P_Mandalorian</option>
-                            <option value="S&P_trooper.png">S&P_Stormtroopers</option>
-                            <option value="S&P_oldhongkong1.png">S&P_Old Hong Kong 1</option> <!-- from gwulo.com -->
-                            <option value="S&P_oldhongkong2.png">S&P_Old Hong Kong 2</option> <!-- from oldhkphoto.com -->
-                            <option value="S&P_grayscale.png">S&P_Grayscale Test</option>
                         </select>
                     </div>
                 </div>
@@ -96,6 +86,7 @@
                             <li><a class="dropdown-item" href="#threshold">Threshold</a></li>
                             <li><a class="dropdown-item" href="#comic-color">Comic Colour</a></li>
                             <li><a class="dropdown-item" href="#auto-contrast">Automatic Contrast</a></li>
+                            <li><a class="dropdown-item" href="#add-noise">Add noise</a></li>
                         </ul>
                     </li>
 
@@ -291,6 +282,24 @@
                         </div>
                     </div>
 
+                    <!-- Add noise -->
+                    <div class="tab-pane" id="add-noise">
+                        <div class="container-fluid">
+                            <div class="row">
+                                <div class="col-4">
+                                    <label for="noise-percentage">Percentage of noise:</label>
+                                    <div class="input-group">
+                                        <div class="row flex-fill align-items-center mx-0 px-2 border rounded-left">
+                                            <input class="custom-range" id="noise-percentage" type="range" value="5" min="0" max="100" step="1"
+                                             oninput="$(this).parents('.input-group').find('.input-group-text > span').html($(this).val())">
+                                        </div>
+                                        <div class="input-group-append"><span class="input-group-text d-block" style="width: 4em"><span>5</span>%</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Blur -->
                     <div class="tab-pane" id="blur">
                         <div class="container-fluid">
@@ -337,7 +346,7 @@
                                         <option value="Adaptive">Adaptive</option>
                                     </select>
                                 </div>
-                                <div class="col-4">
+                                <div class="col-4" id="filter-block">
                                     <label for="kuwahara-filter-size">Filter size:</label>
                                     <div class="input-group">
                                         <div class="row flex-fill align-items-center mx-0 px-2 border rounded-left">

@@ -58,6 +58,10 @@
             return variance;
         }
 
+        function calc2DGaussKernal(i, j, sigma){
+            return (1 / (2 * Math.PI * sigma**2)) * Math.E ** (-1 * (i**2 + j**2)/(2 * sigma**2));
+        }
+
         function regionStat(x, y) {
             // Find the mean colour and brightness
             var meanR = 0, meanG = 0, meanB = 0;
@@ -78,7 +82,7 @@
             meanR /= Math.ceil(size/2)**2;
             meanG /= Math.ceil(size/2)**2;
             meanB /= Math.ceil(size/2)**2;
-            meanValue /= Math.ceil(size/2)**2;
+            meanValue /= Math.ceil(size/2)**2; 
 
             // Find the variance
             var variance = 0;
@@ -215,6 +219,71 @@
             };
         }
 
+        function CircularRegionStat(x, y, sigma, region, N){
+            var meanR = 0, meanG = 0, meanB = 0, 
+                varianceR = 0, varianceG = 0, varianceB = 0;
+
+            var radius = parseInt(sigma * 3);
+            var weightedCircle = [];
+            for (var j = -radius; j <= radius; j++){
+                weightedCircle.push([]);
+                for (var i = -radius; i <= radius; i++){
+                    var pixel = imageproc.getPixel(inputData, x + i, y + j);
+                    var weight = calc2DGaussKernal(i, j, sigma);
+                    weightedCircle[j+radius].push({r: pixel.r * weight, g: pixel.g * weight, b: pixel.b * weight, w: weight});
+                }
+            }
+
+            // console.log(weightedCircle);
+
+            var arrRegion = [], totalWeight = 0;
+            for (var j = -radius; j <= radius; j++){
+                for (var i = -radius; i <= radius; i++){
+                    var theta = Math.PI + Math.atan2(j,i);
+                    // console.log(theta);
+                    //if within the region
+                    if( (region - 0.5) < (N/(2*Math.PI) * theta) && ((N/(2*Math.PI) * theta) < region + 0.5)){
+                        var pixelWeighted = weightedCircle[j+radius][i+radius];
+                        var pixelOriginal = imageproc.getPixel(inputData, x + i, y + j);
+
+                        //{rW, gW, bW} = weighted colors, {rU, gU, bU} = unweighted colors
+                        arrRegion.push({rW: pixelWeighted.r, gW: pixelWeighted.g, bW: pixelWeighted.b,
+                                        rU: pixelOriginal.r, gU: pixelOriginal.g, bU: pixelOriginal.b, w: pixelWeighted.w});
+
+                        totalWeight += pixelWeighted.w;
+                    }
+                }
+            }
+
+            // console.log(arrRegion, totalWeight);
+
+            if (totalWeight == 0) meanR = meanG = meanB = varianceR = varianceG = varianceB = 0;
+
+            meanR = arrRegion.reduce((acc, cur) => acc + cur.rW, 0) / totalWeight;
+            meanG = arrRegion.reduce((acc, cur) => acc + cur.gW, 0) / totalWeight;
+            meanB = arrRegion.reduce((acc, cur) => acc + cur.bW, 0) / totalWeight;
+
+            // console.log(meanR);
+
+            varianceR = arrRegion.reduce((acc, cur) => acc + (cur.w * (cur.rU - meanR)**2), 0) / totalWeight;
+            varianceG = arrRegion.reduce((acc, cur) => acc + (cur.w * (cur.gU - meanG)**2), 0) / totalWeight;
+            varianceB = arrRegion.reduce((acc, cur) => acc + (cur.w * (cur.bU - meanB)**2), 0) / totalWeight;
+
+            // if (isNaN(varianceR) || isNaN(varianceG) || isNaN(varianceB) || isNaN(meanR) || isNaN(meanG) || isNaN(meanB)){
+            //     console.log({
+            //     mean: {r: meanR, g: meanG, b: meanB},
+            //     variance: {r: varianceR, g: varianceG, b: varianceB, 
+            //                 region: varianceR + varianceG + varianceB}
+            // });
+            // }
+
+            return {
+                mean: {r: meanR, g: meanG, b: meanB},
+                variance: {r: varianceR, g: varianceG, b: varianceB, 
+                            region: varianceR + varianceG + varianceB}
+            };
+
+        }
 
         switch(type){
 
@@ -264,7 +333,60 @@
 
         case "Gaussian-circular":
             //TODO: implement Gaussian circular filter
-            
+            var sigma = parseInt($("#gaussian-sigma").val());
+            var N = parseInt($("#gaussian-n").val());
+            var q = parseInt($("#gaussian-q").val());
+
+            for(var y = 0; y < inputData.height; y++){
+                for (var x = 0; x < inputData.width; x++){
+                    var arrStats = [];
+
+                    for(var i = 1; i <= N; i++){
+                        var stats = CircularRegionStat(x, y, sigma, i, N, inputData);
+                        arrStats.push(stats); // arrStats[0] = region 1 stats
+                    }
+
+                    if(q >= 71){ //q approach infinity
+                        var curMin = arrStats[0];
+                        for(var m = 0; m < N; m++){
+                            if(curMin.variance.region > arrStats[m].variance.region){
+                                curMin = arrStats[m];
+                            }
+                        }
+
+                        var i = (x + y * inputData.width) * 4;
+
+                        outputData.data[i]     = parseInt(curMin.mean.r);
+                        outputData.data[i + 1] = parseInt(curMin.mean.g);
+                        outputData.data[i + 2] = parseInt(curMin.mean.b);
+                    }
+                    else{ // 0 <= q <= 70
+                        var resultNumer = {
+                            r: arrStats.reduce((acc, cur) => acc + (cur.mean.r * Math.max(cur.variance.region, 1e-8) ** (-q/2)), 0),
+                            g: arrStats.reduce((acc, cur) => acc + (cur.mean.g * Math.max(cur.variance.region, 1e-8) ** (-q/2)), 0),
+                            b: arrStats.reduce((acc, cur) => acc + (cur.mean.b * Math.max(cur.variance.region, 1e-8) ** (-q/2)), 0),
+                        };
+
+                        var resultDenom = {
+                            r: arrStats.reduce((acc, cur) => acc + (Math.max(cur.variance.region, 1e-8) ** (-q/2)), 0),
+                            g: arrStats.reduce((acc, cur) => acc + (Math.max(cur.variance.region, 1e-8) ** (-q/2)), 0),
+                            b: arrStats.reduce((acc, cur) => acc + (Math.max(cur.variance.region, 1e-8) ** (-q/2)), 0)
+                        };
+
+                        // if(isNaN(parseInt(resultNumer.r / resultDenom.r))){console.log(x, y, resultNumer.r, resultDenom.r, arrStats);}
+
+                        var i = (x + y * inputData.width) * 4;
+
+                        outputData.data[i]     = parseInt(resultNumer.r / resultDenom.r);
+                        outputData.data[i + 1] = parseInt(resultNumer.g / resultDenom.g);
+                        outputData.data[i + 2] = parseInt(resultNumer.b / resultDenom.b);
+
+                    }
+
+                }
+            }
+
+            console.log("completed")
             break;
         case "Tomita-Tsuji":
             console.log("Applying Tomita-Tsuji Kuwahara filter...");
@@ -456,7 +578,8 @@
                         outputData.data[i + 2] = regionD.mean.b;
                     }
                 }
-            }            
+            }
+            console.log("completed")            
             break;
     }
     }

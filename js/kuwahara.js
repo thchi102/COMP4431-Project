@@ -232,55 +232,60 @@
         }
 
         function CircularRegionStat(x, y, sigma, region, N){
+            var meanR = 0, meanG = 0, meanB = 0, 
+                varianceR = 0, varianceG = 0, varianceB = 0;
 
-            var meanR = 0, meanG = 0, meanB = 0, variance = 0, totalWeight = 0;
-
-            for (var j = -(parseInt(sigma*3)+1); j <= parseInt(sigma*3)+1; j++) {
-                for (var i = -(parseInt(sigma*3)+1); i <= parseInt(sigma*3)+1; i++) {
+            var radius = parseInt(sigma * 3);
+            var weightedCircle = [];
+            for (var j = -radius; j <= radius; j++){
+                weightedCircle.push([]);
+                for (var i = -radius; i <= radius; i++){
                     var pixel = imageproc.getPixel(inputData, x + i, y + j);
-                    var weight = calcWeight(i, j, sigma, region, N);
-                    // console.log(weight);
-                    meanR += pixel.r * weight;
-                    meanG += pixel.g * weight;
-                    meanB += pixel.b * weight;
-                    totalWeight += weight;
+                    var weight = calc2DGaussKernal(i, j, sigma);
+                    weightedCircle[j+radius].push({r: pixel.r * weight, g: pixel.g * weight, b: pixel.b * weight, w: weight});
                 }
             }
 
-            for (var j = -(parseInt(sigma*3)+1); j <= parseInt(sigma*3)+1; j++) {
-                for (var i = -(parseInt(sigma*3)+1); i <= parseInt(sigma*3)+1; i++) {
-                    var pixel = imageproc.getPixel(inputData, x + i, y + j);
-                    var weight = calcWeight(i, j, sigma, region, N);
-                    variance += (pixel.r- meanR)**2 * weight;
-                    variance += (pixel.r- meanR)**2 * weight;
-                    variance += (pixel.r- meanR)**2 * weight;
+            // console.log(weightedCircle);
 
+            var arrRegion = [], totalWeight = 0;
+            for (var j = -radius; j <= radius; j++){
+                for (var i = -radius; i <= radius; i++){
+                    var theta = Math.PI + Math.atan2(j,i);
+                    // console.log(theta);
+                    //if within the region
+                    if( (region - 0.5) < (N/(2*Math.PI) * theta) && ((N/(2*Math.PI) * theta) < region + 0.5)){
+                        var pixelWeighted = weightedCircle[j+radius][i+radius];
+                        var pixelOriginal = imageproc.getPixel(inputData, x + i, y + j);
+
+                        //{rW, gW, bW} = weighted colors, {rU, gU, bU} = unweighted colors
+                        arrRegion.push({rW: pixelWeighted.r, gW: pixelWeighted.g, bW: pixelWeighted.b,
+                                        rU: pixelOriginal.r, gU: pixelOriginal.g, bU: pixelOriginal.b, w: pixelWeighted.w});
+
+                        totalWeight += pixelWeighted.w;
+                    }
                 }
             }
 
-            if(totalWeight != 0){
-                meanR /= totalWeight;
-                meanG /= totalWeight;
-                meanB /= totalWeight;
-                variance /= totalWeight;
-            }
-            else{
-                meanR = 0; meanG = 0; meanB = 0;
-                variance = 0;
-            }
+            // console.log(arrRegion, totalWeight);
 
-            // console.log({
-            //     mean: {r: meanR/totalWeight, g: meanG/totalWeight, b: meanB/totalWeight},
-            //     variance: variance/totalWeight
-            // });
+            meanR = arrRegion.reduce((acc, cur) => acc + cur.rW, 0) / totalWeight;
+            meanG = arrRegion.reduce((acc, cur) => acc + cur.gW, 0) / totalWeight;
+            meanB = arrRegion.reduce((acc, cur) => acc + cur.bW, 0) / totalWeight;
+
+            // console.log(meanR);
+
+            varianceR = arrRegion.reduce((acc, cur) => acc + (pixelWeighted.w * (cur.rU - meanR)**2), 0) / totalWeight;
+            varianceG = arrRegion.reduce((acc, cur) => acc + (pixelWeighted.w * (cur.gU - meanG)**2), 0) / totalWeight;
+            varianceB = arrRegion.reduce((acc, cur) => acc + (pixelWeighted.w * (cur.bU - meanB)**2), 0) / totalWeight;
 
             return {
                 mean: {r: meanR, g: meanG, b: meanB},
-                variance: variance
+                variance: {r: varianceR, g: varianceG, b: varianceB, 
+                            region: varianceR + varianceG + varianceB}
             };
 
         }
-
 
         switch(type){
 
@@ -339,33 +344,32 @@
 
             for(var y = 0; y < inputData.height; y++){
                 for (var x = 0; x < inputData.width; x++){
-                    var arr = [];
+                    var arrStats = [];
 
                     for(var i = 1; i <= N; i++){
-                        var stats = CircularRegionStat(x, y, sigma, i, N);
-                        arr.push(stats.mean);
-                        console.log(stats.variance);
-                        arr[i-1].sd = Math.sqrt(stats.variance);
+                        var stats = CircularRegionStat(x, y, sigma, i, N, inputData);
+                        arrStats.push(stats); // arrStats[0] = region 1 stats
+                        // console.log(stats);
                     }
 
                     // console.log(arr);
 
                     var resultNumer = {
-                        r: arr.reduce((acc, cur) => acc + (cur.r * cur.sd ** (-q)), 0),
-                        g: arr.reduce((acc, cur) => acc + (cur.g * cur.sd ** (-q)), 0),
-                        b: arr.reduce((acc, cur) => acc + (cur.b * cur.sd ** (-q)), 0)
+                        r: arrStats.reduce((acc, cur) => acc + (cur.mean.r * Math.sqrt(cur.variance.region) ** (-q)), 0),
+                        g: arrStats.reduce((acc, cur) => acc + (cur.mean.g * Math.sqrt(cur.variance.region) ** (-q)), 0),
+                        b: arrStats.reduce((acc, cur) => acc + (cur.mean.b * Math.sqrt(cur.variance.region) ** (-q)), 0),
                     };
 
                     var resultDenom = {
-                        r: arr.reduce((acc, cur) => acc + (cur.sd ** (-q)), 0),
-                        g: arr.reduce((acc, cur) => acc + (cur.sd ** (-q)), 0),
-                        b: arr.reduce((acc, cur) => acc + (cur.sd ** (-q)), 0)
+                        r: arrStats.reduce((acc, cur) => acc + (Math.sqrt(cur.variance.region) ** (-q)), 0),
+                        g: arrStats.reduce((acc, cur) => acc + (Math.sqrt(cur.variance.region) ** (-q)), 0),
+                        b: arrStats.reduce((acc, cur) => acc + (Math.sqrt(cur.variance.region) ** (-q)), 0)
                     };
 
                     // console.log(arr[4].sd, arr[5].sd);
 
-                    console.log("Num: ",resultNumer);
-                    console.log("Den: ",resultDenom);
+                    // console.log("Num: ",resultNumer);
+                    // console.log("Den: ",resultDenom);
 
                     var i = (x + y * inputData.width) * 4;
 

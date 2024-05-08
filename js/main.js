@@ -88,17 +88,6 @@ function changeTabs(e) {
     e.preventDefault();
 }
 
-function handleDropdownChange(){
-    var dropdown = document.getElementById("kuwahara-type");
-    var selectedType = dropdown.value;
-    var slide = document.getElementById("filter-block");
-    if(selectedType == "Nagao-Matsuyama"){
-        slide.style.display = "none";
-    }
-    else{
-        slide.style.display = "block";
-    }
-}
 
 // Set up every things when the document is fully loaded
 $(document).ready(function() {
@@ -127,6 +116,9 @@ $(document).ready(function() {
         if (selectedType === 'Gaussian-circular') {
             $('#kuwahara-filter-size').closest('.col-4').hide(); // Hide the original slider
             $('#gaussian-sigma').closest('.col-4').show(); // Show the new sliders
+        } else if (selectedType === 'Nagao-Matsuyama'){
+            $('#kuwahara-filter-size').closest('.col-4').hide(); // Hide the original slider
+            $('#gaussian-sigma').closest('.col-4').hide(); // Hide the new sliders
         } else {
             $('#kuwahara-filter-size').closest('.col-4').show(); // Show the original slider
             $('#gaussian-sigma').closest('.col-4').hide(); // Hide the new sliders
@@ -135,14 +127,12 @@ $(document).ready(function() {
 
     //make max of gaussian-circular filter smoothing factor display as infinity
     $('#gaussian-q').on("input", function() {
-    var value = parseInt($(this).val());
-    if (value === 71) {
-        $('#gaussian-q').parents('.input-group').find('.input-group-text > span').html("&infin;");
-    } else {
-        $('#gaussian-q').parents('.input-group').find('.input-group-text > span').text(value);
-    }
+        var value = parseInt($(this).val());
+        if (value === 71) {
+            $('#gaussian-q').parents('.input-group').find('.input-group-text > span').html("&infin;");
+        } else {
+            $('#gaussian-q').parents('.input-group').find('.input-group-text > span').text(value);
+        }
     });
-
-    $("#kuwahara-type").on("change", function() { handleDropdownChange(); });
 
 });

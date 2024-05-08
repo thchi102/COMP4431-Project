@@ -406,7 +406,7 @@
             for (var j = -radius; j <= radius; j++){
                 weightedCircle.push([]);
                 for (var i = -radius; i <= radius; i++){
-                    var pixel = imageproc.getPixel(inputData, x + i, y + j);
+                    var pixel = imageproc.getPixel(inputData, x + i, y + j, "mirror");
                     var weight = calc2DGaussKernal(i, j, sigma);
                     weightedCircle[j+radius].push({r: pixel.r * weight, g: pixel.g * weight, b: pixel.b * weight, w: weight});
                 }
@@ -422,7 +422,7 @@
                     //if within the region
                     if( (region - 0.5) < (N/(2*Math.PI) * theta) && ((N/(2*Math.PI) * theta) < region + 0.5)){
                         var pixelWeighted = weightedCircle[j+radius][i+radius];
-                        var pixelOriginal = imageproc.getPixel(inputData, x + i, y + j);
+                        var pixelOriginal = imageproc.getPixel(inputData, x + i, y + j, "mirror");
 
                         //{rW, gW, bW} = weighted colors, {rU, gU, bU} = unweighted colors
                         arrRegion.push({rW: pixelWeighted.r, gW: pixelWeighted.g, bW: pixelWeighted.b,

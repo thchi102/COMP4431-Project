@@ -30,18 +30,11 @@
         <div class="row">
             <div class="col-6">
                 <h5>Input Image</h5>
-                <canvas id="input" width="320" height="204"></canvas>
+                <canvas id="input" width="480" height="360"></canvas>
                 <div class="form-inline">
                     <div class="input-group">
                         <div class="input-group-prepend"><span class="input-group-text">Image</span></div>
                         <select class="custom-select" id="input-image">
-                            <option value="testQ.png">testQ</option>
-                            <option value="fig2.png">fig2</option>
-                            <option value="fig2Small.png">fig2Small</option>
-                            <option value="bridge.png">bridge</option>
-                            <option value="castle.png">castle</option>
-                            <option value="testing330.png">testing330</option>
-                            <option value="testing30.png">testing30</option>
                             <option value="hkust.png">HKUST</option>
                             <option value="justice_league.png">Justice League</option>
                             <option value="wonder_woman.png">Wonder Woman</option>
@@ -52,13 +45,16 @@
                             <option value="oldhongkong1.png">Old Hong Kong 1</option> <!-- from gwulo.com -->
                             <option value="oldhongkong2.png">Old Hong Kong 2</option> <!-- from oldhkphoto.com -->
                             <option value="grayscale.png">Grayscale Test</option>
+                            <option value="greyCircle.png">Noisy Grey Circle</option>
+                            <option value="noisySpike.png">Noisy Grey Spike</option>
+                            <option value="garden.png">Garden</option>
                         </select>
                     </div>
                 </div>
             </div>
             <div class="col-6">
                 <h5>Output Image</h5>
-                <canvas id="output" width="320" height="204"></canvas>
+                <canvas id="output" width="480" height="360"></canvas>
                 <div class="form-inline">
                     <button id="output-update" class="btn btn-info"><i class="fas fa-sync"></i> Update Output</button>
                 </div>
